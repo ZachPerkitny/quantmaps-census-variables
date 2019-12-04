@@ -1,0 +1,64 @@
+html
+    head
+        title= 'Census Variables'
+        link(rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css")
+    body
+        div(class="container py-5")
+            h2(class='mb-5')
+                = 'A Sane Way to Lookup Census Variables'
+            div(class="row mb-3")
+                div(class="col-3")
+                    select(class="form-control" id="variable-year-select")
+                        each year in years.reverse()
+                            option= year
+                div(class="col-9")
+                    input(type="text" class="form-control" id="variable-search" placeholder="Search")
+            ul(class="list-group" id="variables-results")
+
+        script(src="https://code.jquery.com/jquery-3.3.1.min.js")
+        script(src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js")
+        script(src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js")
+        script.
+            $(document).ready(function() {
+                var $variableResults = $("#variables-results")
+                var $variableSearch = $("#variable-search")
+                var $variableYearSelect = $("#variable-year-select")
+
+                var query = $variableSearch.val()
+                var year = $variableYearSelect.val()
+
+                function queryApiForVariables() {
+                    var params = {
+                        query: query
+                    }
+                    $.get('/api/variable/' + year + '/?' + $.param(params), function(res) {
+                        $variableResults.empty()
+                        for (var variable of res) {
+                            var $text = $("<h6>", {
+                                text: variable.name
+                            }).append($("<small>", {
+                                class: 'ml-1',
+                                text: variable.description
+                            }))
+                            var $li = $("<li/>", {
+                                class: "list-group-item",
+                            }).append($text)
+                            $variableResults.append($li)
+                        }
+                    })
+                }
+
+                $variableSearch.on('input', function() {
+                    query = $(this).val()
+                    if (query) {
+                        queryApiForVariables()
+                    } else {
+                        $variableResults.empty()
+                    }
+                })
+
+                $variableYearSelect.on('change', function() {
+                    year = $(this).val()
+                    queryApiForVariables()
+                })
+            })
